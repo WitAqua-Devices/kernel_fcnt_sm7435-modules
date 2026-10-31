@@ -7801,6 +7801,14 @@ int dsi_display_set_mode(struct dsi_display *display,
 			adj_mode.priv_info->clk_rate_hz);
 
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
+
+	/*
+	 * Dynamic fps only stretches the porches, so the panel has to be told
+	 * about the new frame rate as well.
+	 */
+	if (dsi_panel_update_fps(display->panel, timing.refresh_rate))
+		DSI_ERR("[%s] failed to update panel frame rate\n",
+				display->name);
 error:
 	mutex_unlock(&display->display_lock);
 	return rc;

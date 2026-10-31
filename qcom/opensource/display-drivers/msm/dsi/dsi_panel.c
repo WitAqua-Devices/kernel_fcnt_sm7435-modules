@@ -1973,6 +1973,10 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-mode-switch-on-command",
 	"qcom,mdss-dsi-qsync-on-commands",
 	"qcom,mdss-dsi-qsync-off-commands",
+	"qcom,mdss-dsi-144-on-command",
+	"qcom,mdss-dsi-120-on-command",
+	"qcom,mdss-dsi-90-on-command",
+	"qcom,mdss-dsi-60-on-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -2001,6 +2005,10 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-mode-switch-on-command-state",
 	"qcom,mdss-dsi-qsync-on-commands-state",
 	"qcom,mdss-dsi-qsync-off-commands-state",
+	"qcom,mdss-dsi-144-on-command-state",
+	"qcom,mdss-dsi-120-on-command-state",
+	"qcom,mdss-dsi-90-on-command-state",
+	"qcom,mdss-dsi-60-on-command-state",
 };
 
 int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
@@ -4869,6 +4877,59 @@ int dsi_panel_post_switch(struct dsi_panel *panel)
 	return rc;
 }
 
+static int dsi_panel_update_fps_locked(struct dsi_panel *panel,
+		u32 refresh_rate)
+{
+	enum dsi_cmd_set_type type;
+	int rc;
+
+	switch (refresh_rate) {
+	case 144:
+		type = DSI_CMD_SET_FPS_144;
+		break;
+	case 120:
+		type = DSI_CMD_SET_FPS_120;
+		break;
+	case 90:
+		type = DSI_CMD_SET_FPS_90;
+		break;
+	case 60:
+		type = DSI_CMD_SET_FPS_60;
+		break;
+	default:
+		return 0;
+	}
+
+	if (!panel->cur_mode->priv_info->cmd_sets[type].count)
+		return 0;
+
+	rc = dsi_panel_tx_cmd_set(panel, type);
+	if (rc) {
+		DSI_ERR("[%s] failed to send %uHz frame rate cmds, rc=%d\n",
+				panel->name, refresh_rate, rc);
+		return rc;
+	}
+
+	panel->fps_cmd_rate = refresh_rate;
+	return 0;
+}
+
+int dsi_panel_update_fps(struct dsi_panel *panel, u32 refresh_rate)
+{
+	int rc = 0;
+
+	if (!panel || !panel->cur_mode || !panel->cur_mode->priv_info)
+		return -EINVAL;
+
+	mutex_lock(&panel->panel_lock);
+
+	if (panel->panel_initialized && panel->fps_cmd_rate != refresh_rate)
+		rc = dsi_panel_update_fps_locked(panel, refresh_rate);
+
+	mutex_unlock(&panel->panel_lock);
+	return rc;
+}
+
 int dsi_panel_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -4903,6 +4964,15 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		}
 	}
 	panel->panel_initialized = true;
+
+	/*
+	 * The on-command resets the panel frame rate setting, so reprogram it
+	 * for the refresh rate the panel is being enabled with.
+	 */
+	panel->fps_cmd_rate = 0;
+	if (dsi_panel_update_fps_locked(panel,
+			panel->cur_mode->timing.refresh_rate))
+		DSI_ERR("[%s] failed to set panel frame rate\n", panel->name);
 
 error:
 	mutex_unlock(&panel->panel_lock);

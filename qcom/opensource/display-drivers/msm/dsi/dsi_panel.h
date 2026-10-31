@@ -271,6 +271,7 @@ struct dsi_panel {
 	atomic_t esd_recovery_pending;
 
 	bool panel_initialized;
+	u32 fps_cmd_rate;
 	bool te_using_watchdog_timer;
 	struct dsi_qsync_capabilities qsync_caps;
 	struct dsi_avr_capabilities avr_caps;
@@ -363,6 +364,8 @@ int dsi_panel_prepare(struct dsi_panel *panel);
 int dsi_panel_enable(struct dsi_panel *panel);
 
 int dsi_panel_post_enable(struct dsi_panel *panel);
+
+int dsi_panel_update_fps(struct dsi_panel *panel, u32 refresh_rate);
 
 int dsi_panel_pre_disable(struct dsi_panel *panel);
 

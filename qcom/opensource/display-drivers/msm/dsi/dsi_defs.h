@@ -268,6 +268,10 @@ enum dsi_dyn_clk_feature_type {
  * @DSI_CMD_SET_POST_TIMING_SWITCH:        Post timing switch
  * @DSI_CMD_SET_QSYNC_ON                   Enable qsync mode
  * @DSI_CMD_SET_QSYNC_OFF                  Disable qsync mode
+ * @DSI_CMD_SET_FPS_144:                   Panel frame rate setting for 144Hz
+ * @DSI_CMD_SET_FPS_120:                   Panel frame rate setting for 120Hz
+ * @DSI_CMD_SET_FPS_90:                    Panel frame rate setting for 90Hz
+ * @DSI_CMD_SET_FPS_60:                    Panel frame rate setting for 60Hz
  * @DSI_CMD_SET_MAX
  */
 enum dsi_cmd_set_type {
@@ -296,6 +300,10 @@ enum dsi_cmd_set_type {
 	DSI_CMD_SET_POST_TIMING_SWITCH,
 	DSI_CMD_SET_QSYNC_ON,
 	DSI_CMD_SET_QSYNC_OFF,
+	DSI_CMD_SET_FPS_144,
+	DSI_CMD_SET_FPS_120,
+	DSI_CMD_SET_FPS_90,
+	DSI_CMD_SET_FPS_60,
 	DSI_CMD_SET_MAX
 };
 
